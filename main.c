@@ -1,5 +1,5 @@
 #include "bme280.h"
-#include "uart.h"
+#include "uart_MOD.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -41,12 +41,7 @@ void pid_configura_constantes(double Kp_, double Ki_, double Kd_);
 void pid_atualiza_referencia(float referencia_);
 double pid_controle(double saida_medida);
 
-// Define some lcd device parameters
-#define I2C_ADDR 0x27 // I2C device address
-#define LCD_CHR 1     // Mode - Sending data
-#define LCD_CMD 0     // Mode - Sending command
-#define LINE1 0x80    // 1st line
-#define LINE2 0xC0    // 2nd line
+#define I2C_ADDR 0x27 // I2C endereço do modulo
 
 #define RESISTOR 4
 #define FAN 5
@@ -116,14 +111,14 @@ pthread_t userInputThreadId;
 pthread_t temperatureCheckerThreadId;
 pthread_t heatControllerThreadId;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
+
     sem_init(&mutex, 0, 1);
 
     char resultString[300];
     char size;
-    setup(argc, argv);
 
+    setup(argc, argv);
     printf("\n --------------------- \n");
 
     signal(SIGINT, signalTreatment);
@@ -132,34 +127,31 @@ int main(int argc, char *argv[])
     pthread_create(&userInputThreadId, NULL, userInputHandler, NULL);
     printf("Before Temperature Checker Thread\n");
     pthread_create(&temperatureCheckerThreadId, NULL, temperatureChecker, NULL);
-    printf("Before LCD Updater Thread\n");
-    pthread_create(&lcdUpdaterThreadId, NULL, lcdUpdater, NULL);
     printf("Before Heat Controller Thread\n");
     pthread_create(&heatControllerThreadId, NULL, heatController, NULL);
 
     rslt = stream_sensor_data_forced_mode(&dev);
-    if (rslt != BME280_OK)
-    {
+    if (rslt != BME280_OK){
+
         fprintf(stderr, "Failed to stream sensor data (code %+d).\n", rslt);
         exit(1);
+
     }
 
     pthread_join(userInputThreadId, NULL);
     pthread_join(temperatureCheckerThreadId, NULL);
-    pthread_join(lcdUpdaterThreadId, NULL);
     pthread_join(heatControllerThreadId, NULL);
 
     close(uart0_filestream);
     return 0;
 }
 
-void signalTreatment(int s)
-{
+void signalTreatment(int s){
+
     char buffer[4];
     printf("Signal %d\n");
     softPwmWrite(RESISTOR, 80);
     softPwmWrite(FAN, 80);
-    ClrLcd(fd);
     int value = 0;
     memcpy(buffer, (char *)&value, sizeof(value));
     sendData(uart0_filestream, SEND_SYSTEM_STATE, buffer, 1);
@@ -167,103 +159,102 @@ void signalTreatment(int s)
     sendData(uart0_filestream, SEND_WORKING_STATE, buffer, 1);
     pthread_cancel(userInputThreadId);
     pthread_cancel(temperatureCheckerThreadId);
-    pthread_cancel(lcdUpdaterThreadId);
     pthread_cancel(heatControllerThreadId);
     printf("Encerrado\n");
     exit(0);
+
 }
 
-void *lcdUpdater(void *vargp)
-{
+void *lcdUpdater(void *vargp){
+
     char lcdMessage[20];
     time_t currentTime;
     char menu[6];
 
-    while (1)
-    {
+    while (1){
 
         usleep(500000);
-        if (overOn)
-        {
-            lcdLoc(fd, LINE1);
-            if (preHeating == 1)
-            {
+        if (overOn){
+
+            if (preHeating == 1){
+
                 currentTime = time(0);
-                snprintf(lcdMessage, 16, "Pre Aquecendo    ");
+                printf("Pre Aquecendo");
+
             }
-            else if (heating == 1)
-            {
+            else if (heating == 1){
+
                 currentTime = time(0);
-                snprintf(lcdMessage, 16, "Aquecendo: %d s", totalTime * 60 - (currentTime - startTime));
+                printf("Aquecendo: %d s", totalTime * 60 - (currentTime - startTime));
+
             }
-            else
-            {
-                snprintf(lcdMessage, 16, "%s: %ds %dg", menuOptions[selectedOption].name, menuOptions[selectedOption].time * 60, menuOptions[selectedOption].temperature);
+            else{
+                printf("%s: %ds %dg", menuOptions[selectedOption].name, menuOptions[selectedOption].time * 60, menuOptions[selectedOption].temperature);
             }
-            typeln(fd, lcdMessage);
-            lcdLoc(fd, LINE2);
-            snprintf(lcdMessage, 16, "TI:%.1f TR:%.1f", internalTemperature, referenceTemperature);
-            typeln(fd, lcdMessage);
         }
     }
 }
 
-void *cool(void *vargp)
-{
+void *cool(void *vargp){
+
     printf("Cooling 0\n");
     time_t currentTime;
 
     int controle;
     char buffer[4] = {};
     int value = -100;
-    while (1)
-    {
+
+    while (1){
+
         usleep(3000000);
         printf("Cooling\n");
-        if (internalTemperature > roomTemperature && heating != 1) // Se um novo aquecimento for iniciado ou a temperatura estiver baixa, para o resfriamento
-        {
+
+        if (internalTemperature > roomTemperature && heating != 1){// Se um novo aquecimento for iniciado ou a temperatura estiver baixa, para o resfriamento
+
             memcpy(buffer, (char *)&value, sizeof(value));
             sendData(uart0_filestream, SEND_CONTROL_SIGNAL, buffer, 4);
             softPwmWrite(FAN, 90);
+
         }
-        else
-        {
+        else{
+
             value = 0;
             memcpy(buffer, (char *)&value, sizeof(value));
             sendData(uart0_filestream, SEND_CONTROL_SIGNAL, buffer, 4);
             softPwmWrite(FAN, 0);
             break;
+
         }
     }
 }
-void *heatController(void *vargp)
-{
+
+void *heatController(void *vargp){
+
     time_t currentTime;
-
     pthread_t coolThreadId;
-
     int controle;
     char buffer[4];
 
-    while (1)
-    {
+    while (1){
+
         usleep(1000000);
         printf("heating: %d, preHeating: %d\n", heating, preHeating);
-        if (preHeating == 1)
-        {
+
+        if (preHeating == 1){
             startTime = time(0);
-            if ((internalTemperature + 2.0) >= referenceTemperature)
-            {
+            if ((internalTemperature + 2.0) >= referenceTemperature){
                 preHeating = 0;
             }
         }
-        if (heating)
-        {
+
+        if (heating){
+
             usleep(1000000);
             currentTime = time(0);
             printf("time: %d\n", (currentTime - startTime));
-            if ((currentTime - startTime) - (60 * totalTime) >= 0)
-            {
+
+            if ((currentTime - startTime) - (60 * totalTime) >= 0){
+
                 printf("Heat Finished\n");
                 heating = 0;
                 softPwmWrite(RESISTOR, 0);
@@ -271,40 +262,44 @@ void *heatController(void *vargp)
                 pthread_create(&coolThreadId, NULL, cool, NULL);
                 printf("Await Cool\n");
                 pthread_join(coolThreadId, NULL);
+
             }
-            else
-            {
+            else{
+
                 controle = pid_controle(internalTemperature);
                 printf("Controle: %d\n", controle);
                 memcpy(buffer, (char *)&controle, sizeof(controle));
                 sendData(uart0_filestream, SEND_CONTROL_SIGNAL, buffer, 4);
-                if (controle >= 0)
-                {
+
+                if (controle >= 0){
+
                     printf("Aquecendo, %d\n", controle);
                     softPwmWrite(RESISTOR, controle);
                     softPwmWrite(FAN, 0);
+
                 }
-                else
-                {
+                else{
+
                     printf("Resfriando, %d\n", MIN(controle, -40));
                     softPwmWrite(RESISTOR, 0);
                     softPwmWrite(FAN, MIN(controle, -40));
+
                 }
             }
         }
     }
 }
 
-void *temperatureChecker(void *vargp)
-{
+void *temperatureChecker(void *vargp){
+
     char readBuffer[30];
     int readBufferSize;
     int bmerslt;
     uint32_t req_delay;
-    while (1)
-    {
-        if (overOn)
-        {
+
+    while (1){
+
+        if (overOn){
 
             printf("fetching temperatures\n");
 
@@ -328,17 +323,16 @@ void *temperatureChecker(void *vargp)
     }
 }
 
-void *userInputHandler(void *vargp)
-{
+void *userInputHandler(void *vargp){
+
     int userCommand;
     char inputBuffer[30];
     char resultBuffer[30];
-
     char buffer[4] = {0, 0, 0, 0};
     char value = 0;
 
-    while (1)
-    {
+    while (1){
+
         usleep(500000);
         sem_wait(&mutex);
         requestData(uart0_filestream, READ_USER_COMMANDS);
@@ -347,11 +341,12 @@ void *userInputHandler(void *vargp)
         memcpy(&userCommand, &inputBuffer[3], 4);
         sem_post(&mutex);
         printf("User Command: %d\n", userCommand);
-        switch (userCommand)
-        {
+
+        switch (userCommand){
         case 0:
             printf("Nenhum comando\n");
             break;
+
         case 1:
             printf("Liga Forno\n");
             overOn = 1;
@@ -364,6 +359,7 @@ void *userInputHandler(void *vargp)
             sem_post(&mutex);
             lcd_init(fd); // setup LCD
             break;
+
         case 2:
             printf("Desliga Forno\n");
             value = 0;
@@ -379,9 +375,10 @@ void *userInputHandler(void *vargp)
             overOn = 0;
             ClrLcd(fd);
             break;
+
         case 3:
-            if (overOn)
-            {
+            if (overOn){
+
                 printf("Inicia Aquecimento\n");
                 preHeating = 1;
                 value = 1;
@@ -391,11 +388,12 @@ void *userInputHandler(void *vargp)
                 readData(uart0_filestream, inputBuffer, 9);
                 sem_post(&mutex);
                 heating = 1;
+
             }
             break;
+
         case 4:
-            if (overOn)
-            {
+            if (overOn){
                 printf("Cancela Processo\n");
                 value = 1;
                 softPwmWrite(RESISTOR, 0);
@@ -410,11 +408,12 @@ void *userInputHandler(void *vargp)
                 break;
             }
         case 5:
-            if (overOn)
-            {
+
+            if (overOn){
+
                 printf("Adiciona Tempo\n");
-                if (selectedOption == 0)
-                {
+                if (selectedOption == 0){
+
                     totalTime = totalTime + 1;
                     menuOptions[0].time = totalTime;
                     memcpy(buffer, (char *)&totalTime, sizeof(totalTime));
@@ -423,15 +422,17 @@ void *userInputHandler(void *vargp)
                     usleep(1000000);
                     readData(uart0_filestream, inputBuffer, 9);
                     sem_post(&mutex);
+
                 }
             }
             break;
+
         case 6:
-            if (overOn)
-            {
+            if (overOn){
+
                 printf("Diminui Tempo\n");
-                if (selectedOption == 0)
-                {
+                if (selectedOption == 0){
+
                     totalTime = MAX(totalTime - 1, 0);
                     menuOptions[selectedOption].time = totalTime;
                     memcpy(buffer, (char *)&totalTime, sizeof(totalTime));
@@ -440,17 +441,17 @@ void *userInputHandler(void *vargp)
                     usleep(1000000);
                     readData(uart0_filestream, inputBuffer, 9);
                     sem_post(&mutex);
+
                 }
             }
             break;
+
         case 7:
             printf("Menu\n");
-            if (selectedOption == 3)
-            {
+            if (selectedOption == 3){
                 selectedOption = 0;
             }
-            else
-            {
+            else{
                 selectedOption++;
             }
 
@@ -461,7 +462,6 @@ void *userInputHandler(void *vargp)
             usleep(1000000);
             readData(uart0_filestream, inputBuffer, 9);
             sem_post(&mutex);
-
             break;
 
         default:
@@ -471,24 +471,24 @@ void *userInputHandler(void *vargp)
     }
 }
 
-void setup(int argc, char *argv[])
-{
+void setup(int argc, char *argv[]){
+
     frango.temperature = 70;
     frango.time = 3;
     strcpy(frango.name, (char *)FRG);
-    carne.temperature = 70;
-    carne.time = 5;
+        carne.temperature = 70;
+        carne.time = 5;
     strcpy(carne.name, CRN);
-    pizza.temperature = 60;
-    pizza.time = 2;
+        pizza.temperature = 60;
+        pizza.time = 2;
     strcpy(pizza.name, PZZ);
-    userOption.temperature = 0;
-    userOption.time = 0;
+        userOption.temperature = 0;
+        userOption.time = 0;
     strcpy(userOption.name, CST);
-    menuOptions[0] = userOption;
-    menuOptions[1] = frango;
-    menuOptions[2] = carne;
-    menuOptions[3] = pizza;
+        menuOptions[0] = userOption;
+        menuOptions[1] = frango;
+        menuOptions[2] = carne;
+        menuOptions[3] = pizza;
 
     uart0_filestream = openUart();
 
@@ -505,22 +505,19 @@ void setup(int argc, char *argv[])
 
     int8_t rslt = BME280_OK;
 
-    if (argc < 2)
-    {
+    if (argc < 2){
         fprintf(stderr, "Missing argument for i2c bus.\n");
         exit(1);
     }
 
-    if ((id.fd = open(argv[1], O_RDWR)) < 0)
-    {
+    if ((id.fd = open(argv[1], O_RDWR)) < 0){
         fprintf(stderr, "Failed to open the i2c bus %s\n", argv[1]);
         exit(1);
     }
 
     id.dev_addr = BME280_I2C_ADDR_PRIM;
 
-    if (ioctl(id.fd, I2C_SLAVE, id.dev_addr) < 0)
-    {
+    if (ioctl(id.fd, I2C_SLAVE, id.dev_addr) < 0){
         fprintf(stderr, "Failed to acquire bus access and/or talk to slave.\n");
         exit(1);
     }
@@ -535,26 +532,22 @@ void setup(int argc, char *argv[])
 
     /* Initialize the bme280 */
     rslt = bme280_init(&dev);
-    if (rslt != BME280_OK)
-    {
+    if (rslt != BME280_OK){
         fprintf(stderr, "Failed to initialize the device (code %+d).\n", rslt);
         exit(1);
     }
-
     printf("Temperature, Pressure, Humidity\n");
 }
 
-int openUart()
-{
+int openUart(){
+
     int filestream = -1;
 
     filestream = open("/dev/serial0", O_RDWR | O_NOCTTY | O_NDELAY); // Open in non blocking read/write mode
-    if (filestream == -1)
-    {
+    if (filestream == -1){
         printf("Erro - Não foi possível iniciar a UART.\n");
     }
-    else
-    {
+    else{
         printf("UART inicializada!\n");
     }
 
@@ -589,12 +582,10 @@ double pid_controle(double saida_medida)
 
     erro_total += erro; // Acumula o erro (Termo Integral)
 
-    if (erro_total >= sinal_de_controle_MAX)
-    {
+    if (erro_total >= sinal_de_controle_MAX){
         erro_total = sinal_de_controle_MAX;
     }
-    else if (erro_total <= sinal_de_controle_MIN)
-    {
+    else if (erro_total <= sinal_de_controle_MIN){
         erro_total = sinal_de_controle_MIN;
     }
 
@@ -602,29 +593,23 @@ double pid_controle(double saida_medida)
 
     sinal_de_controle = Kp * erro + (Ki * T) * erro_total + (Kd / T) * delta_error; // PID calcula sinal de controle
 
-    if (sinal_de_controle >= sinal_de_controle_MAX)
-    {
+    if (sinal_de_controle >= sinal_de_controle_MAX){
         sinal_de_controle = sinal_de_controle_MAX;
     }
-    else if (sinal_de_controle <= sinal_de_controle_MIN)
-    {
+    else if (sinal_de_controle <= sinal_de_controle_MIN){
         sinal_de_controle = sinal_de_controle_MIN;
     }
 
     erro_anterior = erro;
-
     return sinal_de_controle;
 }
 
-int8_t user_i2c_read(uint8_t reg_addr, uint8_t *data, uint32_t len, void *intf_ptr)
-{
+int8_t user_i2c_read(uint8_t reg_addr, uint8_t *data, uint32_t len, void *intf_ptr){
+
     struct identifier id;
-
     id = *((struct identifier *)intf_ptr);
-
     write(id.fd, &reg_addr, 1);
     read(id.fd, data, len);
-
     return 0;
 }
 
@@ -632,39 +617,37 @@ int8_t user_i2c_read(uint8_t reg_addr, uint8_t *data, uint32_t len, void *intf_p
  * @brief This function provides the delay for required time (Microseconds) as per the input provided in some of the
  * APIs
  */
-void user_delay_us(uint32_t period, void *intf_ptr)
-{
+
+void user_delay_us(uint32_t period, void *intf_ptr){
     usleep(period);
 }
 
 /*!
  * @brief This function for writing the sensor's registers through I2C bus.
  */
-int8_t user_i2c_write(uint8_t reg_addr, const uint8_t *data, uint32_t len, void *intf_ptr)
-{
+int8_t user_i2c_write(uint8_t reg_addr, const uint8_t *data, uint32_t len, void *intf_ptr){
+
     uint8_t *buf;
     struct identifier id;
-
     id = *((struct identifier *)intf_ptr);
-
     buf = malloc(len + 1);
     buf[0] = reg_addr;
     memcpy(buf + 1, data, len);
-    if (write(id.fd, buf, len + 1) < (uint16_t)len)
-    {
+
+    if (write(id.fd, buf, len + 1) < (uint16_t)len){
         return BME280_E_COMM_FAIL;
     }
 
     free(buf);
-
     return BME280_OK;
 }
 
 /*!
  * @brief This API used to print the sensor temperature, pressure and humidity data.
  */
-void print_sensor_data(struct bme280_data *comp_data)
-{
+
+void print_sensor_data(struct bme280_data *comp_data){
+
     float temp, press, hum;
 
 #ifdef BME280_FLOAT_ENABLE
@@ -689,8 +672,9 @@ void print_sensor_data(struct bme280_data *comp_data)
 /*!
  * @brief This API reads the sensor temperature, pressure and humidity data in forced mode.
  */
-int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
-{
+
+int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev){
+
     /* Variable to define the result */
     int8_t rslt = BME280_OK;
 
@@ -713,10 +697,8 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
 
     /* Set the sensor settings */
     rslt = bme280_set_sensor_settings(settings_sel, dev);
-    if (rslt != BME280_OK)
-    {
+    if (rslt != BME280_OK){
         fprintf(stderr, "Failed to set sensor settings (code %+d).", rslt);
-
         return rslt;
     }
 
@@ -727,13 +709,11 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
     req_delay = bme280_cal_meas_delay(&dev->settings);
 
     /* Continuously stream sensor data */
-    while (1)
-    {
+    while (1){
         usleep(2000000);
         /* Set the sensor to forced mode */
         rslt = bme280_set_sensor_mode(BME280_FORCED_MODE, dev);
-        if (rslt != BME280_OK)
-        {
+        if (rslt != BME280_OK){
             fprintf(stderr, "Failed to set sensor mode (code %+d).", rslt);
             break;
         }
@@ -741,8 +721,7 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
         /* Wait for the measurement to complete and print data */
         dev->delay_us(req_delay, dev->intf_ptr);
         rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);
-        if (rslt != BME280_OK)
-        {
+        if (rslt != BME280_OK){
             fprintf(stderr, "Failed to get sensor data (code %+d).", rslt);
             break;
         }
