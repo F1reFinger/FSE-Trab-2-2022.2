@@ -23,6 +23,17 @@ int openUart();
 
 char matricula[4] = {1, 8, 4, 7};
 
+
+short calcula_CRC(unsigned char *commands, int size){
+    short crc = 0;
+
+    for(int i = 0; i < size; i++){
+        crc = CRC16(crc, commands[i]);
+    }
+
+    return crc;
+}
+
 int printBuffer(unsigned char *buf, int size){
     int i;
 
@@ -141,14 +152,4 @@ short CRC16(short crc, char data){
         0x8201, 0x42C0, 0x4380, 0x8341, 0x4100, 0x81C1, 0x8081, 0x4040};
 
     return ((crc & 0xFF00) >> 8) ^ tbl[(crc & 0x00FF) ^ (data & 0x00FF)];
-}
-
-short calcula_CRC(unsigned char *commands, int size){
-    short crc = 0;
-
-    for(int i = 0; i < size; i++){
-        crc = CRC16(crc, commands[i]);
-    }
-
-    return crc;
 }
