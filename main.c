@@ -443,7 +443,7 @@ void *userInputHandler(void *vargp){
             }
             break;
 
-        case 7:
+        case 165:
             printf("Menu\n");
             if (selectedOption == 3){
                 selectedOption = 0;
