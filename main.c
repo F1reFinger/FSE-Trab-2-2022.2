@@ -23,9 +23,6 @@
 #define MENU 0xA5
 
 #define FRG "frg"
-#define CRN "crn"
-#define PZZ "pzz"
-#define CST "custom"
 
 double saida_medida, sinal_de_controle;
 double referencia = 0.0;
@@ -37,6 +34,7 @@ unsigned long last_time;
 double erro_total, erro_anterior = 0.0;
 int sinal_de_controle_MAX = 100.0;
 int sinal_de_controle_MIN = -100.0;
+int stat = 1;
 void pid_configura_constantes(double Kp_, double Ki_, double Kd_);
 void pid_atualiza_referencia(float referencia_);
 double pid_controle(double saida_medida);
@@ -49,6 +47,11 @@ double pid_controle(double saida_medida);
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
+typedef struct{
+    int temperature;
+    int time;
+}config;
+
 typedef struct
 {
     int temperature;
@@ -56,10 +59,10 @@ typedef struct
     char name[6];
 } Option;
 Option frango;
-Option carne;
-Option pizza;
+Option Coxinha;
 Option userOption;
 Option menuOptions[5];
+config alarme[10];
 
 int selectedOption = 0;
 
@@ -111,9 +114,35 @@ pthread_t userInputThreadId;
 pthread_t temperatureCheckerThreadId;
 pthread_t heatControllerThreadId;
 
+void set_alarme(){
+    alarme[0] -> time = 0, alarme->temperature[0] = 25;
+    alarme[1] -> time = 60, alarme->temperature[1] = 38;
+    alarme[2] -> time = 120, alarme->temperature[2] = 46;
+    alarme[3] -> time = 240, alarme->temperature[3] = 54;
+    alarme[4] -> time = 260, alarme->temperature[4] = 57;
+    alarme[5] -> time = 300, alarme->temperature[5] = 61;
+    alarme[6] -> time = 360, alarme->temperature[6] = 63;
+    alarme[7] -> time = 420, alarme->temperature[7] = 54;
+    alarme[8] -> time = 480, alarme->temperature[8] = 33;
+    alarme[9] -> time = 600, alarme->temperature[9] = 25;
+}
+
+void Alarme(int signum){
+    if(stat == 9){
+        stat = 0;
+    }
+    menuOptions[1].temperature = alarme[stat].temperature;
+    menuOptions[1].time = alarme[stat].time;
+    menuOptions[1].name = "Pizza";
+    stat++;
+    alarm(alarme[stat].time);
+}
+
 int main(int argc, char *argv[]){
 
     sem_init(&mutex, 0, 1);
+    set_alarme();
+
 
     char resultString[300];
     char size;
@@ -123,6 +152,7 @@ int main(int argc, char *argv[]){
 
     signal(SIGINT, signalTreatment);
     signal(SIGHUP, signalTreatment);
+    signal(SIGALRM, Alarme);
 
     pthread_create(&userInputThreadId, NULL, userInputHandler, NULL);
     printf("Antes da thread de verificação de temperatura \n");
@@ -332,6 +362,8 @@ void *userInputHandler(void *vargp){
 
     while (1){
 
+
+
         usleep(500000);
         sem_wait(&mutex);
         requestData(uart0_filestream, READ_USER_COMMANDS);
@@ -404,56 +436,23 @@ void *userInputHandler(void *vargp){
                 heating = 0;
                 break;
             }
-        case 5:
-
-            if (overOn){
-
-                printf("Adiciona Temp.\n");
-                if (selectedOption == 0){
-
-                    totalTime = totalTime + 1;
-                    menuOptions[0].time = totalTime;
-                    memcpy(buffer, (char *)&totalTime, sizeof(totalTime));
-                    sem_wait(&mutex);
-                    sendData(uart0_filestream, SEND_TIMER_VALUE, buffer, 4);
-                    usleep(1000000);
-                    readData(uart0_filestream, inputBuffer, 9);
-                    sem_post(&mutex);
-
-                }
-            }
-            break;
-
-        case 6:
-            if (overOn){
-
-                printf("Diminui Temp.\n");
-                if (selectedOption == 0){
-
-                    totalTime = MAX(totalTime - 1, 0);
-                    menuOptions[selectedOption].time = totalTime;
-                    memcpy(buffer, (char *)&totalTime, sizeof(totalTime));
-                    sem_wait(&mutex);
-                    sendData(uart0_filestream, SEND_TIMER_VALUE, buffer, 4);
-                    usleep(1000000);
-                    readData(uart0_filestream, inputBuffer, 9);
-                    sem_post(&mutex);
-
-                }
-            }
-            break;
-
+        
         case 165:
-            printf("Menu\n");
-            if (selectedOption == 2){
-                selectedOption = 0;
+            printf("Troca Estados\n");
+
+            if (selectedOption == 1){
+                selectedOption = !selectedOption;
+            }
+
+            if(selectedOption == 1){
+                totalTime = alarme[0].time;
+                alarm(1);
             }
             else{
-                selectedOption++;
+                totalTime = menuOptions[selectedOption].time;
             }
 
-            totalTime = menuOptions[selectedOption].time;
-            memcpy(buffer, (char *)&menuOptions[selectedOption].time, sizeof(int));
+            memcpy(buffer, (char *)&totalTime, sizeof(int));
             sem_wait(&mutex);
             sendData(uart0_filestream, SEND_TIMER_VALUE, buffer, 4);
             usleep(1000000);
@@ -470,22 +469,11 @@ void *userInputHandler(void *vargp){
 
 void setup(int argc, char *argv[]){
 
-    frango.temperature = 70;
-    frango.time = 3;
-    strcpy(frango.name, (char *)FRG);
-        carne.temperature = 70;
-        carne.time = 5;
-    strcpy(carne.name, CRN);
-        pizza.temperature = 60;
-        pizza.time = 2;
-    strcpy(pizza.name, PZZ);
-        userOption.temperature = 0;
-        userOption.time = 0;
     strcpy(userOption.name, CST);
         menuOptions[0] = userOption;
-        menuOptions[1] = frango;
-        menuOptions[2] = carne;
-        menuOptions[3] = pizza;
+        menuOptions[1].temperature = alarme[0].temperature;
+        menuOptions[1].time = alarme[0].time;
+        menuOptions[1].name = "Pizza";
 
     uart0_filestream = openUart();
 
