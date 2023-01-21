@@ -358,7 +358,7 @@ void *userInputHandler(void *vargp){
             sem_post(&mutex);
             break;
 
-        case 2:
+        case 162:
             printf("Desliga Forno\n");
             value = 0;
             softPwmWrite(RESISTOR, 0);
