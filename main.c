@@ -373,7 +373,7 @@ void *userInputHandler(void *vargp){
             overOn = 0;
             break;
 
-        case 3:
+        case 163:
             if (overOn){
 
                 printf("Inicia Aquecimento\n");
@@ -389,7 +389,7 @@ void *userInputHandler(void *vargp){
             }
             break;
 
-        case 4:
+        case 164:
             if (overOn){
                 printf("Cancela Processo\n");
                 value = 1;
@@ -408,7 +408,7 @@ void *userInputHandler(void *vargp){
 
             if (overOn){
 
-                printf("Adiciona Tempo\n");
+                printf("Adiciona Temp.\n");
                 if (selectedOption == 0){
 
                     totalTime = totalTime + 1;
@@ -427,7 +427,7 @@ void *userInputHandler(void *vargp){
         case 6:
             if (overOn){
 
-                printf("Diminui Tempo\n");
+                printf("Diminui Temp.\n");
                 if (selectedOption == 0){
 
                     totalTime = MAX(totalTime - 1, 0);
