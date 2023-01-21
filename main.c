@@ -357,7 +357,6 @@ void *userInputHandler(void *vargp){
             usleep(1000000);
             readData(uart0_filestream, inputBuffer, 9);
             sem_post(&mutex);
-            lcd_init(fd); // setup LCD
             break;
 
         case 2:
@@ -373,7 +372,6 @@ void *userInputHandler(void *vargp){
             sem_post(&mutex);
             totalTime = 0;
             overOn = 0;
-            ClrLcd(fd);
             break;
 
         case 3:
