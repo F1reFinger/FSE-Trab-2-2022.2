@@ -404,7 +404,7 @@ void *userInputHandler(void *vargp){
                 heating = 0;
                 break;
             }
-        case 165:
+        case 5:
 
             if (overOn){
 
@@ -443,9 +443,9 @@ void *userInputHandler(void *vargp){
             }
             break;
 
-        case 7:
+        case 165:
             printf("Menu\n");
-            if (selectedOption == 3){
+            if (selectedOption == 2){
                 selectedOption = 0;
             }
             else{
