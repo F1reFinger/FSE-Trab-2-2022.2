@@ -17,7 +17,6 @@
 #define SEND_TIMER_VALUE 0xD6
 
 short CRC16(short crc, char data);
-short calcula_CRC(unsigned *commands, int size);
 
 int openUart();
 
