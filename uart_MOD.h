@@ -42,12 +42,12 @@ int requestData(int fileStream, int dataType){
     buffer[1] = 0x23;
     buffer[2] = dataType;
 
-    memmcpy(&buffer[3], matricula, 4);
+    memcpy(&buffer[3], matricula, 4);
 
     short crc = calcula_CRC(&buffer[0], 3 + 4);
     memcpy(&buffer[3 + 4], &crc, 2);
 
-    int result = write(fileStreamm, &buffer, (3 + 4 + 2));
+    int result = write(fileStream, &buffer, (3 + 4 + 2));
 
     return 0;
 }
