@@ -96,7 +96,7 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev);
 sem_t mutex;
 void *userInputHandler(void *vargp);
 void *temperatureChecker(void *vargp);
-void *lcdUpdater(void *vargp);
+void *PrintaComandos(void *vargp);
 void *heatController(void *vargp);
 void *cool(void *vargp);
 void signalTreatment(int s);
@@ -165,9 +165,8 @@ void signalTreatment(int s){
 
 }
 
-void *lcdUpdater(void *vargp){
+void *PrintaComandos(void *vargp){
 
-    char lcdMessage[20];
     time_t currentTime;
     char menu[6];
 
@@ -340,14 +339,14 @@ void *userInputHandler(void *vargp){
         readData(uart0_filestream, inputBuffer, 9);
         memcpy(&userCommand, &inputBuffer[3], 4);
         sem_post(&mutex);
-        printf("User Command: %d\n", userCommand);
+        printf("Comando de usuario: %d\n", userCommand);
 
         switch (userCommand){
         case 0:
             printf("Nenhum comando\n");
             break;
 
-        case 1:
+        case 161:
             printf("Liga Forno\n");
             overOn = 1;
             value = 1;
