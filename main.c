@@ -22,10 +22,10 @@
 #define CANCEL_PROCESS 0xA4
 #define MENU 0xA5
 
-#define FRG "frg"
-#define CRN "crn"
-#define PZZ "pzz"
-#define CST "custom"
+//#define FRG "frg"
+//#define CRN "crn"
+//#define PZZ "pzz"
+//#define CST "custom"
 
 double saida_medida, sinal_de_controle;
 double referencia = 0.0;
@@ -125,15 +125,15 @@ int main(int argc, char *argv[]){
     signal(SIGHUP, signalTreatment);
 
     pthread_create(&userInputThreadId, NULL, userInputHandler, NULL);
-    printf("Before Temperature Checker Thread\n");
+    printf("Antes da thread de verificação de temperatura \n");
     pthread_create(&temperatureCheckerThreadId, NULL, temperatureChecker, NULL);
-    printf("Before Heat Controller Thread\n");
+    printf("Antes da thread de controle de aquecimento\n");
     pthread_create(&heatControllerThreadId, NULL, heatController, NULL);
 
     rslt = stream_sensor_data_forced_mode(&dev);
     if (rslt != BME280_OK){
 
-        fprintf(stderr, "Failed to stream sensor data (code %+d).\n", rslt);
+        fprintf(stderr, "Falha em compartilhar dados do sensor (code %+d).\n", rslt);
         exit(1);
 
     }
@@ -197,7 +197,7 @@ void *lcdUpdater(void *vargp){
 
 void *cool(void *vargp){
 
-    printf("Cooling 0\n");
+    printf("Resfriando 0\n");
     time_t currentTime;
 
     int controle;
@@ -207,7 +207,7 @@ void *cool(void *vargp){
     while (1){
 
         usleep(3000000);
-        printf("Cooling\n");
+        printf("Resfriando...\n");
 
         if (internalTemperature > roomTemperature && heating != 1){// Se um novo aquecimento for iniciado ou a temperatura estiver baixa, para o resfriamento
 
@@ -238,7 +238,7 @@ void *heatController(void *vargp){
     while (1){
 
         usleep(1000000);
-        printf("heating: %d, preHeating: %d\n", heating, preHeating);
+        printf("Aquecendo: %d, pre-Aquecendo: %d\n", heating, preHeating);
 
         if (preHeating == 1){
             startTime = time(0);
@@ -251,16 +251,16 @@ void *heatController(void *vargp){
 
             usleep(1000000);
             currentTime = time(0);
-            printf("time: %d\n", (currentTime - startTime));
+            printf("tempo: %d\n", (currentTime - startTime));
 
             if ((currentTime - startTime) - (60 * totalTime) >= 0){
 
-                printf("Heat Finished\n");
+                printf("Aquecimento finalizado\n");
                 heating = 0;
                 softPwmWrite(RESISTOR, 0);
                 softPwmWrite(FAN, 0);
                 pthread_create(&coolThreadId, NULL, cool, NULL);
-                printf("Await Cool\n");
+                printf("Aguardando resfriamento\n");
                 pthread_join(coolThreadId, NULL);
 
             }
@@ -504,19 +504,19 @@ void setup(int argc, char *argv[]){
     int8_t rslt = BME280_OK;
 
     if (argc < 2){
-        fprintf(stderr, "Missing argument for i2c bus.\n");
+        fprintf(stderr, "Falta de argumentos para o barramento i2c.\n");
         exit(1);
     }
 
     if ((id.fd = open(argv[1], O_RDWR)) < 0){
-        fprintf(stderr, "Failed to open the i2c bus %s\n", argv[1]);
+        fprintf(stderr, "Falha em abrir o barramento i2c %s\n", argv[1]);
         exit(1);
     }
 
     id.dev_addr = BME280_I2C_ADDR_PRIM;
 
     if (ioctl(id.fd, I2C_SLAVE, id.dev_addr) < 0){
-        fprintf(stderr, "Failed to acquire bus access and/or talk to slave.\n");
+        fprintf(stderr, "Falha em alcançar o barramento e/ou conversar com o dispositivo.\n");
         exit(1);
     }
 
@@ -531,10 +531,10 @@ void setup(int argc, char *argv[]){
     /* Initialize the bme280 */
     rslt = bme280_init(&dev);
     if (rslt != BME280_OK){
-        fprintf(stderr, "Failed to initialize the device (code %+d).\n", rslt);
+        fprintf(stderr, "Falha ao iniciar o dispositivo(code %+d).\n", rslt);
         exit(1);
     }
-    printf("Temperature, Pressure, Humidity\n");
+    printf("Temperatura, Pressão, umidade\n");
 }
 
 int openUart(){
@@ -664,7 +664,7 @@ void print_sensor_data(struct bme280_data *comp_data){
 #endif
 #endif
     roomTemperature = temp;
-    printf("room temperature: %f\n", temp);
+    printf("Temperatura da sala: %.2f\n", temp);
 }
 
 /*!
@@ -696,11 +696,11 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev){
     /* Set the sensor settings */
     rslt = bme280_set_sensor_settings(settings_sel, dev);
     if (rslt != BME280_OK){
-        fprintf(stderr, "Failed to set sensor settings (code %+d).", rslt);
+        fprintf(stderr, "Falha em definir configurações do sensor (code %+d).", rslt);
         return rslt;
     }
 
-    printf("Temperature, Pressure, Humidity\n");
+    printf("Temperatura, Pressão, umidade\n");
 
     /*Calculate the minimum delay required between consecutive measurement based upon the sensor enabled
      *  and the oversampling configuration. */
@@ -712,7 +712,7 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev){
         /* Set the sensor to forced mode */
         rslt = bme280_set_sensor_mode(BME280_FORCED_MODE, dev);
         if (rslt != BME280_OK){
-            fprintf(stderr, "Failed to set sensor mode (code %+d).", rslt);
+            fprintf(stderr, "Falha em definir o modo do sensor (code %+d).", rslt);
             break;
         }
 
@@ -720,7 +720,7 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev){
         dev->delay_us(req_delay, dev->intf_ptr);
         rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);
         if (rslt != BME280_OK){
-            fprintf(stderr, "Failed to get sensor data (code %+d).", rslt);
+            fprintf(stderr, "Falha em recuperar dados do sensor (code %+d).", rslt);
             break;
         }
 
