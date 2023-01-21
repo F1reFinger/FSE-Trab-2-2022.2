@@ -22,10 +22,10 @@
 #define CANCEL_PROCESS 0xA4
 #define MENU 0xA5
 
-//#define FRG "frg"
-//#define CRN "crn"
-//#define PZZ "pzz"
-//#define CST "custom"
+#define FRG "frg"
+#define CRN "crn"
+#define PZZ "pzz"
+#define CST "custom"
 
 double saida_medida, sinal_de_controle;
 double referencia = 0.0;
