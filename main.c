@@ -432,7 +432,7 @@ void *userInputHandler(void *vargp){
                 softPwmWrite(FAN, 0);
                 memcpy(buffer, (char *)&value, sizeof(value));
                 sem_wait(&mutex);
-                sendData(uart0_filestream, SEND_STOPPING_STATE, buffer, 1);
+                sendData(uart0_filestream, SEND_WORKING_STATE, buffer, 0);
                 usleep(1000000);
                 readData(uart0_filestream, inputBuffer, 9);
                 sem_post(&mutex);
@@ -461,7 +461,7 @@ void *userInputHandler(void *vargp){
 
                 memcpy(buffer, (char *)&totalTime, sizeof(int));
                 sem_wait(&mutex);
-                sendData(uart0_filestream, SEND_AMBIENT_TEMPERATURE, buffer, 4);
+                sendData(uart0_filestream, CONTROL_MODE, buffer, 4);
                 usleep(1000000);
                 readData(uart0_filestream, inputBuffer, 9);
                 sem_post(&mutex);
