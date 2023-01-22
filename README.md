@@ -1,4 +1,11 @@
-# FSE-Trab-2-2022.2
-My attempt to create an industrial solder oven based on Teacher's specifications
+minha tentativa de criar um forno de solda industrial baseado nas especificações do professor
 
-You can find the specifications here <a href="https://gitlab.com/fse_fga/trabalhos-2022_2/trabalho-2-2022-2" target=_blank>Little explanation</a>
+Você pode verificar as especificações aqui: <a href="https://gitlab.com/fse_fga/trabalhos-2022_2/trabalho-2-2022-2" target=_blank>Explicação</a>
+
+Depois de insntaladas as bibliotecas apenas execute o comando abaixo na pasta do repositorio
+
+```bash 
+make
+```
+
+o makefile resolve o resto
