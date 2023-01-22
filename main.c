@@ -115,16 +115,16 @@ pthread_t temperatureCheckerThreadId;
 pthread_t heatControllerThreadId;
 
 void set_alarme(){
-    alarme[0] -> time = 0, alarme->temperature[0] = 25;
-    alarme[1] -> time = 60, alarme->temperature[1] = 38;
-    alarme[2] -> time = 120, alarme->temperature[2] = 46;
-    alarme[3] -> time = 240, alarme->temperature[3] = 54;
-    alarme[4] -> time = 260, alarme->temperature[4] = 57;
-    alarme[5] -> time = 300, alarme->temperature[5] = 61;
-    alarme[6] -> time = 360, alarme->temperature[6] = 63;
-    alarme[7] -> time = 420, alarme->temperature[7] = 54;
-    alarme[8] -> time = 480, alarme->temperature[8] = 33;
-    alarme[9] -> time = 600, alarme->temperature[9] = 25;
+    alarme[0]->time = 0, alarme->temperature[0] = 25;
+    alarme[1]->time = 60, alarme->temperature[1] = 38;
+    alarme[2]->time = 120, alarme->temperature[2] = 46;
+    alarme[3]->time = 240, alarme->temperature[3] = 54;
+    alarme[4]->time = 260, alarme->temperature[4] = 57;
+    alarme[5]->time = 300, alarme->temperature[5] = 61;
+    alarme[6]->time = 360, alarme->temperature[6] = 63;
+    alarme[7]->time = 420, alarme->temperature[7] = 54;
+    alarme[8]->time = 480, alarme->temperature[8] = 33;
+    alarme[9]->time = 600, alarme->temperature[9] = 25;
 }
 
 void Alarme(int signum){
@@ -133,7 +133,7 @@ void Alarme(int signum){
     }
     menuOptions[1].temperature = alarme[stat].temperature;
     menuOptions[1].time = alarme[stat].time;
-    menuOptions[1].name = "Pizza";
+    menuOptions[1].name = 'Pizza';
     stat++;
     alarm(alarme[stat].time);
 }
