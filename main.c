@@ -40,7 +40,7 @@ void pid_configura_constantes(double Kp_, double Ki_, double Kd_);
 void pid_atualiza_referencia(float referencia_);
 double pid_controle(double saida_medida);
 
-#define I2C_ADDR 0x27 // I2C endereço do modulo
+#define I2C_ADDR 0x68 // I2C endereço do modulo
 
 #define RESISTOR 4
 #define FAN 5
@@ -424,40 +424,43 @@ void *userInputHandler(void *vargp){
         case 164:
             if (overOn){
                 printf("Cancela Processo\n");
+                preHeating = 0;
+                heating = 0;
                 value = 1;
                 softPwmWrite(RESISTOR, 0);
                 softPwmWrite(FAN, 0);
                 memcpy(buffer, (char *)&value, sizeof(value));
                 sem_wait(&mutex);
-                sendData(uart0_filestream, SEND_WORKING_STATE, buffer, 1);
+                //sendData(uart0_filestream, SEND_WORKING_STATE, buffer, 1);
                 usleep(1000000);
                 readData(uart0_filestream, inputBuffer, 9);
                 sem_post(&mutex);
-                heating = 0;
                 break;
             }
         
         case 165:
-            printf("Troca Estados\n");
+            if(overOn){
+                printf("Troca Estados\n");
 
-            if (selectedOption == 1){
-                selectedOption = !selectedOption;
-            }
+                if (selectedOption == 1){
+                    selectedOption = !selectedOption;
+                }
 
-            if(selectedOption == 1){
-                totalTime = alarme[0].time;
-                alarm(1);
-            }
-            else{
-                totalTime = menuOptions[selectedOption].time;
-            }
+                if(selectedOption == 1){
+                    totalTime = alarme[0].time;
+                    alarm(1);
+                }
+                else{
+                    totalTime = menuOptions[selectedOption].time;
+                }
 
-            memcpy(buffer, (char *)&totalTime, sizeof(int));
-            sem_wait(&mutex);
-            sendData(uart0_filestream, SEND_TIMER_VALUE, buffer, 4);
-            usleep(1000000);
-            readData(uart0_filestream, inputBuffer, 9);
-            sem_post(&mutex);
+                memcpy(buffer, (char *)&totalTime, sizeof(int));
+                sem_wait(&mutex);
+                sendData(uart0_filestream, SEND_TIMER_VALUE, buffer, 4);
+                usleep(1000000);
+                readData(uart0_filestream, inputBuffer, 9);
+                sem_post(&mutex);
+            }
             break;
 
         default:
