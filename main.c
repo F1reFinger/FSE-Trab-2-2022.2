@@ -115,16 +115,16 @@ pthread_t temperatureCheckerThreadId;
 pthread_t heatControllerThreadId;
 
 void set_alarme(){
-    alarme[0].time = 0, alarme[0]->temperature = 25;
-    alarme[1].time = 60, alarme[1]->temperature = 38;
-    alarme[2].time = 120, alarme[2]->temperature = 46;
-    alarme[3].time = 240, alarme[3]->temperature = 54;
-    alarme[4].time = 260, alarme[4]->temperature = 57;
-    alarme[5].time = 300, alarme[5]->temperature = 61;
-    alarme[6].time = 360, alarme[6]->temperature = 63;
-    alarme[7].time = 420, alarme[7]->temperature = 54;
-    alarme[8].time = 480, alarme[8]->temperature = 33;
-    alarme[9].time = 600, alarme[9]->temperature = 25;
+    alarme[0].time = 0, alarme[0].temperature = 25;
+    alarme[1].time = 60, alarme[1].temperature = 38;
+    alarme[2].time = 120, alarme[2].temperature = 46;
+    alarme[3].time = 240, alarme[3].temperature = 54;
+    alarme[4].time = 260, alarme[4].temperature = 57;
+    alarme[5].time = 300, alarme[5].temperature = 61;
+    alarme[6].time = 360, alarme[6].temperature = 63;
+    alarme[7].time = 420, alarme[7].temperature = 54;
+    alarme[8].time = 480, alarme[8].temperature = 33;
+    alarme[9].time = 600, alarme[9].temperature = 25;
 }
 
 void Alarme(int signum){
