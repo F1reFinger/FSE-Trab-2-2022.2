@@ -23,6 +23,8 @@
 #define MENU 0xA5
 
 #define FRG "frg"
+#define CRN "crn"
+#define PZZ "pzz"
 #define CST "custom"
 
 double saida_medida, sinal_de_controle;
@@ -53,16 +55,14 @@ typedef struct{
     int time;
 }config;
 
-typedef struct
-{
+typedef struct{
     int temperature;
     int time;
     char name[6];
 } Option;
 Option frango;
-Option Coxinha;
 Option userOption;
-Option menuOptions[5];
+Option menuOptions[4];
 config alarme[10];
 
 int selectedOption = 0;
@@ -82,8 +82,7 @@ float roomTemperature = 0;
 void setup();
 int openUart();
 
-struct identifier
-{
+struct identifier{
     /* Variable to hold device address */
     uint8_t dev_addr;
 
@@ -114,6 +113,7 @@ int8_t rslt = BME280_OK;
 pthread_t userInputThreadId;
 pthread_t temperatureCheckerThreadId;
 pthread_t heatControllerThreadId;
+pthread_t alarmeHandlerThreadId;
 
 void set_alarme(){
     alarme[0].time = 0, alarme[0].temperature = 25;
@@ -128,7 +128,7 @@ void set_alarme(){
     alarme[9].time = 600, alarme[9].temperature = 25;
 }
 
-void Alarme(int signum){
+void *Alarme(void *vargp){
     if(stat == 9){
         stat = 0;
     }
@@ -197,6 +197,7 @@ void signalTreatment(int s){
 
 void *PrintaComandos(void *vargp){
 
+    char lcdMessage[20];
     time_t currentTime;
     char menu[6];
 
@@ -220,6 +221,7 @@ void *PrintaComandos(void *vargp){
             else{
                 printf("%s: %ds %dg", menuOptions[selectedOption].name, menuOptions[selectedOption].time * 60, menuOptions[selectedOption].temperature);
             }
+            printf("TI:%.1f TR:%.1f", internalTemperature, referenceTemperature);
         }
     }
 }
@@ -330,7 +332,7 @@ void *temperatureChecker(void *vargp){
 
         if (overOn){
 
-            printf("fetching temperatures\n");
+            printf("Verificando Temperaturas\n");
 
             sem_wait(&mutex);
             requestData(uart0_filestream, REQUEST_INTERNAL_TEMPERATURE);
@@ -424,17 +426,17 @@ void *userInputHandler(void *vargp){
         case 164:
             if (overOn){
                 printf("Cancela Processo\n");
-                preHeating = 0;
-                heating = 0;
+                
                 value = 1;
                 softPwmWrite(RESISTOR, 0);
                 softPwmWrite(FAN, 0);
                 memcpy(buffer, (char *)&value, sizeof(value));
                 sem_wait(&mutex);
-                //sendData(uart0_filestream, SEND_WORKING_STATE, buffer, 1);
+                sendData(uart0_filestream, SEND_WORKING_STATE, buffer, 1);
                 usleep(1000000);
                 readData(uart0_filestream, inputBuffer, 9);
                 sem_post(&mutex);
+                heating = 0;
                 break;
             }
         
@@ -443,11 +445,17 @@ void *userInputHandler(void *vargp){
                 printf("Troca Estados\n");
 
                 if (selectedOption == 1){
-                    selectedOption = !selectedOption;
+                    selectedOption = 0;
+                    pthread_join(alarmeHandlerThreadId, NULL);
+                }
+                else{
+                    selectedOption = 1;
                 }
 
                 if(selectedOption == 1){
                     totalTime = alarme[0].time;
+                    printf("Antes da thread de controle de aquecimento\n");
+                    pthread_create(&alarmeHandlerThreadId, NULL, Alarme, NULL);
                     alarm(1);
                 }
                 else{
