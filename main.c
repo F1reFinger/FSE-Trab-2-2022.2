@@ -204,7 +204,7 @@ void *PrintaComandos(void *vargp){
 
     while (1){
 
-        usleep(500000);
+        usleep(5000000);
         if (overOn){
 
             if (preHeating == 1){
@@ -238,7 +238,7 @@ void *cool(void *vargp){
 
     while (1){
 
-        usleep(300000);
+        usleep(3000000);
         printf("Resfriando...\n");
 
         if (internalTemperature > roomTemperature && heating != 1){// Se um novo aquecimento for iniciado ou a temperatura estiver baixa, para o resfriamento
@@ -269,7 +269,7 @@ void *heatController(void *vargp){
 
     while (1){
 
-        usleep(100000);
+        usleep(1000000);
         printf("Aquecendo: %d, pre-Aquecendo: %d\n", heating, preHeating);
 
         if (preHeating == 1){
@@ -367,7 +367,7 @@ void *userInputHandler(void *vargp){
 
 
 
-        usleep(500000);
+        usleep(5000000);
         sem_wait(&mutex);
         requestData(uart0_filestream, READ_USER_COMMANDS);
         usleep(1000000);
