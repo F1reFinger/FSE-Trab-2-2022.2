@@ -14,8 +14,6 @@
 #define SEND_SYSTEM_STATE 0xD3
 #define CONTROL_MODE 0xD4
 #define SEND_WORKING_STATE 0xD5
-#define SEND_STOPPING_STATE 0xA4
-#define SEND_AMBIENT_TEMPERATURE 0xD6
 
 short CRC16(short crc, char data);
 

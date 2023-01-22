@@ -204,7 +204,7 @@ void *PrintaComandos(void *vargp){
 
     while (1){
 
-        usleep(5000000);
+        usleep(500000);
         if (overOn){
 
             if (preHeating == 1){
@@ -367,7 +367,7 @@ void *userInputHandler(void *vargp){
 
 
 
-        usleep(5000000);
+        usleep(500000);
         sem_wait(&mutex);
         requestData(uart0_filestream, READ_USER_COMMANDS);
         usleep(1000000);
@@ -409,6 +409,7 @@ void *userInputHandler(void *vargp){
             break;
 
         case 163:
+            printf("Entrou na inicia Processo\n");
             if (overOn){
 
                 printf("Inicia Aquecimento\n");
@@ -425,6 +426,7 @@ void *userInputHandler(void *vargp){
             break;
 
         case 164:
+            printf("Entrou no Cancela Processo\n");
             if (overOn){
                 printf("Cancela Processo\n");
                 value = 0;
