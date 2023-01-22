@@ -238,7 +238,7 @@ void *cool(void *vargp){
 
     while (1){
 
-        usleep(3000000);
+        usleep(30000);
         printf("Resfriando...\n");
 
         if (internalTemperature > roomTemperature && heating != 1){// Se um novo aquecimento for iniciado ou a temperatura estiver baixa, para o resfriamento
@@ -269,7 +269,7 @@ void *heatController(void *vargp){
 
     while (1){
 
-        usleep(1000000);
+        usleep(100000);
         printf("Aquecendo: %d, pre-Aquecendo: %d\n", heating, preHeating);
 
         if (preHeating == 1){
@@ -281,7 +281,7 @@ void *heatController(void *vargp){
 
         if (heating){
 
-            usleep(1000000);
+            usleep(100000);
             currentTime = time(0);
             printf("tempo: %d\n", (currentTime - startTime));
 
@@ -337,14 +337,14 @@ void *temperatureChecker(void *vargp){
 
             sem_wait(&mutex);
             requestData(uart0_filestream, REQUEST_INTERNAL_TEMPERATURE);
-            usleep(1000000);
+            usleep(100000);
             readData(uart0_filestream, readBuffer, 9);
             memcpy(&internalTemperature, &readBuffer[3], 4);
             sem_post(&mutex);
 
             sem_wait(&mutex);
             requestData(uart0_filestream, REQUEST_REFERENCE_TEMPERATURE);
-            usleep(1000000);
+            usleep(100000);
             readData(uart0_filestream, readBuffer, 9);
             memcpy(&referenceTemperature, &readBuffer[3], 4);
             sem_post(&mutex);
@@ -367,10 +367,10 @@ void *userInputHandler(void *vargp){
 
 
 
-        usleep(500000);
+        usleep(50000);
         sem_wait(&mutex);
         requestData(uart0_filestream, READ_USER_COMMANDS);
-        usleep(1000000);
+        usleep(100000);
         readData(uart0_filestream, inputBuffer, 9);
         memcpy(&userCommand, &inputBuffer[3], 4);
         sem_post(&mutex);
@@ -388,7 +388,7 @@ void *userInputHandler(void *vargp){
             memcpy(buffer, (char *)&value, sizeof(value));
             sem_wait(&mutex);
             sendData(uart0_filestream, SEND_SYSTEM_STATE, buffer, 1);
-            usleep(1000000);
+            usleep(100000);
             readData(uart0_filestream, inputBuffer, 9);
             sem_post(&mutex);
             break;
@@ -401,7 +401,7 @@ void *userInputHandler(void *vargp){
             memcpy(buffer, (char *)&value, sizeof(value));
             sem_wait(&mutex);
             sendData(uart0_filestream, SEND_SYSTEM_STATE, buffer, 1);
-            usleep(1000000);
+            usleep(100000);
             readData(uart0_filestream, inputBuffer, 9);
             sem_post(&mutex);
             totalTime = 0;
@@ -416,7 +416,7 @@ void *userInputHandler(void *vargp){
                 value = 1;
                 memcpy(buffer, (char *)&value, sizeof(value));
                 sendData(uart0_filestream, SEND_WORKING_STATE, buffer, 1);
-                usleep(1000000);
+                usleep(100000);
                 readData(uart0_filestream, inputBuffer, 9);
                 sem_post(&mutex);
                 heating = 1;
@@ -433,7 +433,7 @@ void *userInputHandler(void *vargp){
                 memcpy(buffer, (char *)&value, sizeof(value));
                 sem_wait(&mutex);
                 sendData(uart0_filestream, SEND_WORKING_STATE, buffer, 1);
-                usleep(1000000);
+                usleep(100000);
                 readData(uart0_filestream, inputBuffer, 9);
                 sem_post(&mutex);
                 heating = 0;
@@ -462,7 +462,7 @@ void *userInputHandler(void *vargp){
                 memcpy(buffer, (char *)&totalTime, sizeof(int));
                 sem_wait(&mutex);
                 sendData(uart0_filestream, CONTROL_MODE, buffer, 4);
-                usleep(1000000);
+                usleep(100000);
                 readData(uart0_filestream, inputBuffer, 9);
                 sem_post(&mutex);
             }
@@ -702,7 +702,7 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev){
 
     /* Continuously stream sensor data */
     while (1){
-        usleep(2000000);
+        usleep(200000);
         /* Set the sensor to forced mode */
         rslt = bme280_set_sensor_mode(BME280_FORCED_MODE, dev);
         if (rslt != BME280_OK){
