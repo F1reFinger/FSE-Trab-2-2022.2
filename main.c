@@ -128,7 +128,8 @@ void set_alarme(){
     alarme[9].time = 600, alarme[9].temperature = 25;
 }
 
-void *Alarme(void *vargp){
+void Alarme(int sinal){
+    printf("Alarme tocou\n");
     if(stat == 9){
         stat = 0;
     }
@@ -446,7 +447,6 @@ void *userInputHandler(void *vargp){
 
                 if (selectedOption == 1){
                     selectedOption = 0;
-                    pthread_join(alarmeHandlerThreadId, NULL);
                 }
                 else{
                     selectedOption = 1;
@@ -454,8 +454,6 @@ void *userInputHandler(void *vargp){
 
                 if(selectedOption == 1){
                     totalTime = alarme[0].time;
-                    printf("Antes da thread de controle de aquecimento\n");
-                    pthread_create(&alarmeHandlerThreadId, NULL, Alarme, NULL);
                     alarm(1);
                 }
                 else{
@@ -464,7 +462,7 @@ void *userInputHandler(void *vargp){
 
                 memcpy(buffer, (char *)&totalTime, sizeof(int));
                 sem_wait(&mutex);
-                sendData(uart0_filestream, SEND_TIMER_VALUE, buffer, 4);
+                sendData(uart0_filestream, SEND_AMBIENT_TEMPERATURE, buffer, 4);
                 usleep(1000000);
                 readData(uart0_filestream, inputBuffer, 9);
                 sem_post(&mutex);
