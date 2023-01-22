@@ -23,6 +23,7 @@
 #define MENU 0xA5
 
 #define FRG "frg"
+#define CST "custom"
 
 double saida_medida, sinal_de_controle;
 double referencia = 0.0;
@@ -133,7 +134,6 @@ void Alarme(int signum){
     }
     menuOptions[1].temperature = alarme[stat].temperature;
     menuOptions[1].time = alarme[stat].time;
-    menuOptions[1].name = 'Pizza';
     stat++;
     alarm(alarme[stat].time);
 }
@@ -473,7 +473,6 @@ void setup(int argc, char *argv[]){
         menuOptions[0] = userOption;
         menuOptions[1].temperature = alarme[0].temperature;
         menuOptions[1].time = alarme[0].time;
-        menuOptions[1].name = "Pizza";
 
     uart0_filestream = openUart();
 
