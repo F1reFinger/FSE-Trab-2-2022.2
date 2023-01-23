@@ -410,8 +410,9 @@ void *userInputHandler(void *vargp){
 
         case 163:
             if (overOn){
-                softPwmWrite(RESISTOR, (REQUEST_REFERENCE_TEMPERATURE - REQUEST_INTERNAL_TEMPERATURE));
-                softPwmWrite(FAN, 0);
+                //softPwmWrite(RESISTOR, (REQUEST_REFERENCE_TEMPERATURE - REQUEST_INTERNAL_TEMPERATURE));
+                //softPwmWrite(FAN, 0);
+                printf("\n\n PowerFull: %.2f \n\n", (REQUEST_REFERENCE_TEMPERATURE - REQUEST_INTERNAL_TEMPERATURE));
                 printf("Inicia Aquecimento\n");
                 preHeating = 1;
                 value = 1;
