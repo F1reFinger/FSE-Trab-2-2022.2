@@ -409,9 +409,9 @@ void *userInputHandler(void *vargp){
             break;
 
         case 163:
-            printf("Entrou na inicia Processo\n");
             if (overOn){
-
+                softPwmWrite(RESISTOR, (REQUEST_REFERENCE_TEMPERATURE - REQUEST_INTERNAL_TEMPERATURE));
+                softPwmWrite(FAN, 0);
                 printf("Inicia Aquecimento\n");
                 preHeating = 1;
                 value = 1;
@@ -426,7 +426,6 @@ void *userInputHandler(void *vargp){
             break;
 
         case 164:
-            printf("Entrou no Cancela Processo\n");
             if (overOn){
                 printf("Cancela Processo\n");
                 value = 0;
